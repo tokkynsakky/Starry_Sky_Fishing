@@ -1,0 +1,36 @@
+/* @import "./base.css"; */
+
+.viewTitle {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #001d3d; /* Deep blue background */
+  color: #ffffff; /* White text color */
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+button {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  background-color: #ffd700; /* Gold button color */
+  color: #001d3d; /* Deep blue text color */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #ffc800; /* Darker gold on hover */
+}
+
+.ar-object {
+  width: 100%;
+  height: 100%;
+}
