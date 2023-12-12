@@ -1,6 +1,6 @@
+// scene.ts;
+
 import * as THREE from "three";
-// import useLogger from './logger';
-// const log = useLogger();
 
 export interface ARScene {
   makeObjectTree(): THREE.Object3D;
@@ -11,11 +11,16 @@ export interface ARScene {
 
 export class TestScene implements ARScene {
   cube?: THREE.Object3D;
+  // dome?: THREE.Object3D;
+  isLaunch?: boolean;
+  passedTime?: number;
 
   name() {
     return "test";
   }
   makeObjectTree(): THREE.Object3D {
+    this.isLaunch = false;
+    this.passedTime = 0;
     // log.info("make object tree", this.name())
     const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1).translate(0, 0.05, 0);
 
@@ -24,11 +29,20 @@ export class TestScene implements ARScene {
     });
     const cube = new THREE.Mesh(geometry, material);
     this.cube = cube;
+
     return cube;
+  }
+
+  launch() {
+    this.isLaunch = true;
   }
 
   animate(sec: number): void {
     if (!this.cube) return;
+    if (this.isLaunch) {
+      this.cube.position.y += this.passedTime ** 2;
+      this.passedTime += 0.001;
+    }
 
     // 立方体を回転させるアニメーション
     //this.cube.rotation.x += 0.01;

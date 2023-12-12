@@ -14,11 +14,11 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    https: {
-      key: fs.readFileSync("key.pem"),
-      cert: fs.readFileSync("cert.pem"),
-      passphrase: "0000",
-    },
+    // https: {
+    // key: fs.readFileSync("key.pem"),
+    // cert: fs.readFileSync("cert.pem"),
+    // passphrase: "0000",
+    // },
   },
   base: "/",
   build: {
