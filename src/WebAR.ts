@@ -1,9 +1,7 @@
+// WebAR.ts
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import type { ARScene } from "./scene";
-// import useLogger from "./logger";
-
-// const log = useLogger();
 
 export interface WebARDelegate {
   onRender?(renderer: THREE.Renderer): void;
@@ -11,14 +9,41 @@ export interface WebARDelegate {
   onARButton?(): void;
 }
 
-// log.info("webar.ts")
-
 export const useWebAR = (): WebAR => {
   return WebAR.getSingleton();
 };
 
+const path = "./assets/starrySky3.jpg";
 export class WebAR {
   scene = new THREE.Scene();
+
+  // domeの画像関連のやつ
+  textureLoader = new THREE.TextureLoader();
+  texture = this.textureLoader.load(path);
+
+  // 必要なパラメータ
+  domeRadius = 10; // ドームの半径
+  domeSegments = 32; // ドームの分割数
+
+  // 材質
+  material_ = new THREE.MeshPhongMaterial({
+    color: 0x87ceeb,
+    map: this.texture,
+    side: THREE.DoubleSide,
+  });
+
+  // ドームのジオメトリ
+  domeGeometry = new THREE.SphereGeometry(
+    this.domeRadius,
+    this.domeSegments,
+    this.domeSegments,
+    0,
+    Math.PI * 2,
+    0,
+    Math.PI / 2
+  );
+  dome = new THREE.Mesh(this.domeGeometry, this.material_);
+
   // // renderer?: THREE.WebGLRenderer;
   cursorNode = new THREE.Object3D();
   baseNode?: THREE.Object3D;
@@ -54,6 +79,7 @@ export class WebAR {
     );
     this.baseNode.add(nodes);
     this.scene.add(this.baseNode!);
+    this.scene.add(this.dome);
 
     this.arScene = ar_scene;
   }
