@@ -43,7 +43,7 @@ export class WebAR {
   makeDome() {
     // domeの画像関連のやつ
     const textureLoader = new THREE.TextureLoader();
-    const texture = textureLoader.load("./assets/starrySky3.jpg");
+    const texture = textureLoader.load("/starrySky3.jpg");
 
     // 必要なパラメータ
     const domeRadius = 10; // ドームの半径
@@ -72,13 +72,21 @@ export class WebAR {
   }
 
   addConstellation() {
+    // 一応呼ばれていそう
     const loader = new GLTFLoader();
-    loader.load("tenbin.glb", (gltf) => {
-      const tenbin = gltf.scene;
-      tenbin.scale.set(1, 1, 1);
-      tenbin.position.y = 3;
-      this.scene.add(tenbin);
-    });
+    loader.load(
+      "/tenbin.glb",
+      (gltf) => {
+        const tenbin = gltf.scene;
+        tenbin.scale.set(0.5, 0.5, 0.5);
+        tenbin.position.y = 1;
+        this.scene.add(tenbin);
+      },
+      undefined,
+      (error) => {
+        alert(error);
+      }
+    );
   }
 
   placeScene(ar_scene: ARScene) {
