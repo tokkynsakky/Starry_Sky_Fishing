@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import type { ARScene } from "./scene";
+import { GLTFLoader } from "three/examples/jsm/Addons.js";
 
 export interface WebARDelegate {
   onRender?(renderer: THREE.Renderer): void;
@@ -13,40 +14,14 @@ export const useWebAR = (): WebAR => {
   return WebAR.getSingleton();
 };
 
-const path = "./assets/starrySky3.jpg";
+// const path = "./assets/starrySky3.jpg";
 export class WebAR {
   scene = new THREE.Scene();
-
-  // domeの画像関連のやつ
-  textureLoader = new THREE.TextureLoader();
-  texture = this.textureLoader.load(path);
-
-  // 必要なパラメータ
-  domeRadius = 10; // ドームの半径
-  domeSegments = 32; // ドームの分割数
-
-  // 材質
-  material_ = new THREE.MeshPhongMaterial({
-    color: 0x87ceeb,
-    map: this.texture,
-    side: THREE.DoubleSide,
-  });
-
-  // ドームのジオメトリ
-  domeGeometry = new THREE.SphereGeometry(
-    this.domeRadius,
-    this.domeSegments,
-    this.domeSegments,
-    0,
-    Math.PI * 2,
-    0,
-    Math.PI / 2
-  );
-  dome = new THREE.Mesh(this.domeGeometry, this.material_);
 
   // // renderer?: THREE.WebGLRenderer;
   cursorNode = new THREE.Object3D();
   baseNode?: THREE.Object3D;
+  dome?: THREE.Object3D;
   delegate?: WebARDelegate;
 
   findPlane: boolean = true;
@@ -65,6 +40,47 @@ export class WebAR {
 
   private constructor() {}
 
+  makeDome() {
+    // domeの画像関連のやつ
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load("./assets/starrySky3.jpg");
+
+    // 必要なパラメータ
+    const domeRadius = 10; // ドームの半径
+    const domeSegments = 32; // ドームの分割数
+
+    // 材質
+    const material_ = new THREE.MeshPhongMaterial({
+      color: 0x87ceeb,
+      map: texture,
+      side: THREE.DoubleSide,
+    });
+
+    // ドームのジオメトリ
+    const domeGeometry = new THREE.SphereGeometry(
+      domeRadius,
+      domeSegments,
+      domeSegments,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI / 2
+    );
+    this.dome = new THREE.Mesh(domeGeometry, material_);
+
+    this.scene.add(this.dome);
+  }
+
+  addConstellation() {
+    const loader = new GLTFLoader();
+    loader.load("tenbin.glb", (gltf) => {
+      const tenbin = gltf.scene;
+      tenbin.scale.set(1, 1, 1);
+      tenbin.position.y = 3;
+      this.scene.add(tenbin);
+    });
+  }
+
   placeScene(ar_scene: ARScene) {
     const nodes = ar_scene.makeObjectTree();
 
@@ -79,7 +95,6 @@ export class WebAR {
     );
     this.baseNode.add(nodes);
     this.scene.add(this.baseNode!);
-    this.scene.add(this.dome);
 
     this.arScene = ar_scene;
   }
@@ -106,6 +121,11 @@ export class WebAR {
     const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
     light.position.set(0.5, 1, 0.25);
     scene.add(light);
+
+    // スタート時に追加したいならここでscene.addをする
+    // this.scene.add(this.dome);
+    this.makeDome();
+    this.addConstellation();
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -139,16 +159,6 @@ export class WebAR {
 
     this.cursorNode = reticle;
 
-    // const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(
-    //     0,
-    //     0.1,
-    //     0
-    // );
-
-    // const material = new THREE.MeshPhongMaterial({
-    //     color: 0xffffff * Math.random(),
-    // });
-
     // this.baseNode.add(new THREE.Mesh(geometry, material));
 
     /* Camera */
@@ -158,19 +168,6 @@ export class WebAR {
       0.01,
       20
     );
-
-    // const onSelect = () => {
-    //     if (reticle.visible) {
-    //         const mesh = new THREE.Mesh(geometry, material);
-    //         reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-    //         mesh.scale.y = Math.random() * 2 + 1;
-    //         scene.add(mesh);
-    //     }
-    // }
-    // /* Controller */
-    // const controller = renderer.xr.getController(0);
-    // controller.addEventListener("select", onSelect);
-    // scene.add(controller);
 
     const onWindowResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;

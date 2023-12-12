@@ -11,7 +11,6 @@ export interface ARScene {
 
 export class TestScene implements ARScene {
   cube?: THREE.Object3D;
-  // dome?: THREE.Object3D;
   isLaunch?: boolean;
   passedTime?: number;
 
@@ -39,7 +38,8 @@ export class TestScene implements ARScene {
 
   animate(sec: number): void {
     if (!this.cube) return;
-    if (this.isLaunch) {
+
+    if (this.isLaunch && this.passedTime !== undefined) {
       this.cube.position.y += this.passedTime ** 2;
       this.passedTime += 0.001;
     }
