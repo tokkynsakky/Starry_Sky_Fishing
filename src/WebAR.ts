@@ -313,123 +313,123 @@ export class WebAR {
   }
 }
 
-class Particle {
-  private isFlying;
-  private geometry;
-  private material;
-  private mesh;
+// class Particle {
+//   private isFlying;
+//   private geometry;
+//   private material;
+//   private mesh;
 
-  constructor() {
-    this.isFlying = false;
+//   constructor() {
+//     this.isFlying = false;
 
-    var scale = 20 + Math.random() * 20;
-    var nLines = 3 + Math.floor(Math.random() * 5);
-    var nRows = 3 + Math.floor(Math.random() * 5);
-    this.geometry = new THREE.SphereGeometry(scale, nLines, nRows);
+//     var scale = 20 + Math.random() * 20;
+//     var nLines = 3 + Math.floor(Math.random() * 5);
+//     var nRows = 3 + Math.floor(Math.random() * 5);
+//     this.geometry = new THREE.SphereGeometry(scale, nLines, nRows);
 
-    this.material = new THREE.MeshLambertMaterial({
-      color: 0xe3e3e3,
-      // shading: THREE.FlatShading,
-      transparent: true,
-    });
+//     this.material = new THREE.MeshLambertMaterial({
+//       color: 0xe3e3e3,
+//       // shading: THREE.FlatShading,
+//       transparent: true,
+//     });
 
-    this.mesh = new THREE.Mesh(this.geometry, this.material);
-    recycleParticle(this);
-  }
-}
+//     this.mesh = new THREE.Mesh(this.geometry, this.material);
+//     recycleParticle(this);
+//   }
+// }
 
-let particleArray = [],
-  slowMoFactor = 1;
+// let particleArray = [],
+//   slowMoFactor = 1;
 
-let cloudTargetPosX,
-  cloudTargetPosY,
-  cloudTargetSpeed,
-  cloudTargetColor,
-  cloudSlowMoFactor = 0.65;
+// let cloudTargetPosX,
+//   cloudTargetPosY,
+//   cloudTargetSpeed,
+//   cloudTargetColor,
+//   cloudSlowMoFactor = 0.65;
 
-const dropParticle = (p, rocket) => {
-  p.mesh.material.opacity = 1;
-  p.mesh.position.x = 0;
-  p.mesh.position.y = rocket.mesh.position.y - 80;
-  p.mesh.position.z = 0;
-  var s = Math.random(0.2) + 0.35;
-  p.mesh.scale.set(0.4 * s, 0.4 * s, 0.4 * s);
-  cloudTargetPosX = 0;
-  cloudTargetPosY = rocket.mesh.position.y - 500;
-  cloudTargetSpeed = 0.8 + Math.random() * 0.6;
-  cloudTargetColor = 0xa3a3a3;
+// const dropParticle = (p, rocket) => {
+//   p.mesh.material.opacity = 1;
+//   p.mesh.position.x = 0;
+//   p.mesh.position.y = rocket.mesh.position.y - 80;
+//   p.mesh.position.z = 0;
+//   var s = Math.random(0.2) + 0.35;
+//   p.mesh.scale.set(0.4 * s, 0.4 * s, 0.4 * s);
+//   cloudTargetPosX = 0;
+//   cloudTargetPosY = rocket.mesh.position.y - 500;
+//   cloudTargetSpeed = 0.8 + Math.random() * 0.6;
+//   cloudTargetColor = 0xa3a3a3;
 
-  TweenMax.to(p.mesh.position, 1.3 * cloudTargetSpeed * cloudSlowMoFactor, {
-    x: cloudTargetPosX,
-    y: cloudTargetPosY,
-    ease: Linear.easeNone,
-    onComplete: recycleParticle,
-    onCompleteParams: [p],
-  });
+//   TweenMax.to(p.mesh.position, 1.3 * cloudTargetSpeed * cloudSlowMoFactor, {
+//     x: cloudTargetPosX,
+//     y: cloudTargetPosY,
+//     ease: Linear.easeNone,
+//     onComplete: recycleParticle,
+//     onCompleteParams: [p],
+//   });
 
-  TweenMax.to(p.mesh.scale, cloudTargetSpeed * cloudSlowMoFactor, {
-    x: s * 1.8,
-    y: s * 1.8,
-    z: s * 1.8,
-    ease: Linear.ease,
-  });
-};
+//   TweenMax.to(p.mesh.scale, cloudTargetSpeed * cloudSlowMoFactor, {
+//     x: s * 1.8,
+//     y: s * 1.8,
+//     z: s * 1.8,
+//     ease: Linear.ease,
+//   });
+// };
 
-const getParticle = () => {
-  let p;
-  if (particleArray.length > 0) {
-    p = particleArray.pop();
-  } else {
-    p = new Particle();
-  }
-  return p;
-};
+// const getParticle = () => {
+//   let p;
+//   if (particleArray.length > 0) {
+//     p = particleArray.pop();
+//   } else {
+//     p = new Particle();
+//   }
+//   return p;
+// };
 
-const createSmoke = (rocket) => {
-  let p = getParticle();
-  dropParticle(p, rocket);
-};
+// const createSmoke = (rocket) => {
+//   let p = getParticle();
+//   dropParticle(p, rocket);
+// };
 
-const createFlyingParticles = () => {
-  let p = getParticle();
-  flyParticle(p);
-};
+// const createFlyingParticles = () => {
+//   let p = getParticle();
+//   flyParticle(p);
+// };
 
-function recycleParticle(p) {
-  p.mesh.position.x = 0;
-  p.mesh.position.y = 0;
-  p.mesh.position.z = 0;
-  p.mesh.rotation.x = Math.random() * Math.PI * 2;
-  p.mesh.rotation.y = Math.random() * Math.PI * 2;
-  p.mesh.rotation.z = Math.random() * Math.PI * 2;
-  p.mesh.scale.set(0.1, 0.1, 0.1);
-  p.mesh.material.opacity = 0;
-  p.color = 0xe3e3e3;
-  p.mesh.material.color.set(p.color);
-  p.material.needUpdate = true;
-  scene.add(p.mesh);
-  particleArray.push(p);
-}
-function flyParticle(p) {
-  var targetPosX, targetPosY, targetSpeed, targetColor;
-  p.mesh.material.opacity = 1;
-  p.mesh.position.x = -1000 + Math.random() * 2000;
-  p.mesh.position.y = 100 + Math.random() * 2000;
-  p.mesh.position.z = -1000 + Math.random() * 1500;
+// function recycleParticle(p) {
+//   p.mesh.position.x = 0;
+//   p.mesh.position.y = 0;
+//   p.mesh.position.z = 0;
+//   p.mesh.rotation.x = Math.random() * Math.PI * 2;
+//   p.mesh.rotation.y = Math.random() * Math.PI * 2;
+//   p.mesh.rotation.z = Math.random() * Math.PI * 2;
+//   p.mesh.scale.set(0.1, 0.1, 0.1);
+//   p.mesh.material.opacity = 0;
+//   p.color = 0xe3e3e3;
+//   p.mesh.material.color.set(p.color);
+//   p.material.needUpdate = true;
+//   scene.add(p.mesh);
+//   particleArray.push(p);
+// }
+// function flyParticle(p) {
+//   var targetPosX, targetPosY, targetSpeed, targetColor;
+//   p.mesh.material.opacity = 1;
+//   p.mesh.position.x = -1000 + Math.random() * 2000;
+//   p.mesh.position.y = 100 + Math.random() * 2000;
+//   p.mesh.position.z = -1000 + Math.random() * 1500;
 
-  var s = Math.random() * 0.2;
-  p.mesh.scale.set(s, s, s);
+//   var s = Math.random() * 0.2;
+//   p.mesh.scale.set(s, s, s);
 
-  targetPosX = 0;
-  targetPosY = -p.mesh.position.y - 2500;
-  targetSpeed = 1 + Math.random() * 2;
-  targetColor = 0xe3e3e3;
+//   targetPosX = 0;
+//   targetPosY = -p.mesh.position.y - 2500;
+//   targetSpeed = 1 + Math.random() * 2;
+//   targetColor = 0xe3e3e3;
 
-  TweenMax.to(p.mesh.position, targetSpeed * slowMoFactor, {
-    x: targetPosX,
-    y: targetPosY,
-    ease: Linear.easeNone,
-    onComplete: recycleParticle,
-    onCompleteParams: [p],
-  });
-}
+//   TweenMax.to(p.mesh.position, targetSpeed * slowMoFactor, {
+//     x: targetPosX,
+//     y: targetPosY,
+//     ease: Linear.easeNone,
+//     onComplete: recycleParticle,
+//     onCompleteParams: [p],
+//   });
+// }
