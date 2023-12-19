@@ -31,7 +31,8 @@ export default defineComponent({
     };
 
     const launch = () => {
-      scene.launch();
+      // scene.launch();
+      webar.launch();
     };
 
     return {

@@ -17,6 +17,9 @@ export const useWebAR = (): WebAR => {
 // const path = "./assets/starrySky3.jpg";
 export class WebAR {
   scene = new THREE.Scene();
+  rocket?: THREE.Object3D;
+  passedTime?: number;
+  isLaunch?: boolean;
 
   // // renderer?: THREE.WebGLRenderer;
   cursorNode = new THREE.Object3D();
@@ -46,7 +49,7 @@ export class WebAR {
     const texture = textureLoader.load("/starrySky3.jpg");
 
     // 必要なパラメータ
-    const domeRadius = 10; // ドームの半径
+    const domeRadius = 20; // ドームの半径
     const domeSegments = 32; // ドームの分割数
 
     // 材質
@@ -78,8 +81,8 @@ export class WebAR {
       "/tenbin.glb",
       (gltf) => {
         const tenbin = gltf.scene;
-        tenbin.scale.set(0.5, 0.5, 0.5);
-        tenbin.position.y = 1;
+        tenbin.scale.set(0.05, 0.05, 0.05);
+        tenbin.position.y = 5;
         this.scene.add(tenbin);
       },
       undefined,
@@ -89,8 +92,35 @@ export class WebAR {
     );
   }
 
+  addRocket() {
+    const loader = new GLTFLoader();
+    loader.load("/rocket.gltf", (gltf) => {
+      this.rocket = gltf.scene;
+      this.rocket.position.y = 0;
+      // this.scene.add(rocket);
+    });
+    this.isLaunch = false;
+  }
+
+  launch() {
+    this.isLaunch = true;
+  }
+
+  rocketAnimate(sec: number): void {
+    if (!this.isLaunch) return;
+    if (this.passedTime === undefined) {
+      this.passedTime = 0;
+    }
+    this.rocket.position.y += this.passedTime ** 2;
+    this.passedTime += 0.001;
+    this.rocket.rotation.y += 0.01;
+    // this.cube.position.y += this.passedTime ** 2;
+    // this.passedTime += 0.001;
+  }
+
   placeScene(ar_scene: ARScene) {
-    const nodes = ar_scene.makeObjectTree();
+    // const nodes = ar_scene.makeObjectTree();
+    const nodes = this.rocket;
 
     if (this.baseNode) {
       this.scene.remove(this.baseNode);
@@ -109,7 +139,8 @@ export class WebAR {
 
   changeScene(ar_scene: ARScene) {
     this.baseNode?.clear();
-    this.baseNode?.add(ar_scene.makeObjectTree());
+    // this.baseNode?.add(ar_scene.makeObjectTree());
+    this.baseNode?.add();
     this.arScene = ar_scene;
   }
 
@@ -134,6 +165,7 @@ export class WebAR {
     // this.scene.add(this.dome);
     this.makeDome();
     this.addConstellation();
+    this.addRocket();
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -248,7 +280,8 @@ export class WebAR {
       }
       this.prevTime = timestamp;
 
-      this.arScene?.animate(Number(duration) / 1000);
+      // this.arScene?.animate(Number(duration) / 1000);
+      this.rocketAnimate(Number(duration) / 1000);
 
       this.delegate?.onRender?.(renderer);
       renderer.render(scene, camera);
