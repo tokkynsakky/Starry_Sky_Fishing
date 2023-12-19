@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { useWebAR } from "../WebAR";
 import { TestScene, TestScene2 } from "../scene";
 
@@ -16,4 +16,4 @@ const scene_b = () => {
 <template>
   <button @click="scene_a">Place Scene</button>
   <button @click="scene_b">Change Scene</button>
-</template>
+</template> -->
