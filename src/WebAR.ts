@@ -1,9 +1,8 @@
+// WebAR.ts
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import type { ARScene } from "./scene";
-// import useLogger from "./logger";
-
-// const log = useLogger();
+import { GLTFLoader } from "three/examples/jsm/Addons.js";
 
 export interface WebARDelegate {
   onRender?(renderer: THREE.Renderer): void;
@@ -11,17 +10,21 @@ export interface WebARDelegate {
   onARButton?(): void;
 }
 
-// log.info("webar.ts")
-
 export const useWebAR = (): WebAR => {
   return WebAR.getSingleton();
 };
 
+// const path = "./assets/starrySky3.jpg";
 export class WebAR {
   scene = new THREE.Scene();
+  rocket?: THREE.Object3D;
+  passedTime?: number;
+  isLaunch?: boolean;
+
   // // renderer?: THREE.WebGLRenderer;
   cursorNode = new THREE.Object3D();
   baseNode?: THREE.Object3D;
+  dome?: THREE.Object3D;
   delegate?: WebARDelegate;
 
   findPlane: boolean = true;
@@ -40,8 +43,84 @@ export class WebAR {
 
   private constructor() {}
 
+  makeDome() {
+    // domeの画像関連のやつ
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load("/starrySky3.jpg");
+
+    // 必要なパラメータ
+    const domeRadius = 20; // ドームの半径
+    const domeSegments = 32; // ドームの分割数
+
+    // 材質
+    const material_ = new THREE.MeshPhongMaterial({
+      color: 0x87ceeb,
+      map: texture,
+      side: THREE.DoubleSide,
+    });
+
+    // ドームのジオメトリ
+    const domeGeometry = new THREE.SphereGeometry(
+      domeRadius,
+      domeSegments,
+      domeSegments,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI / 2
+    );
+    this.dome = new THREE.Mesh(domeGeometry, material_);
+
+    this.scene.add(this.dome);
+  }
+
+  addConstellation() {
+    // 一応呼ばれていそう
+    const loader = new GLTFLoader();
+    loader.load(
+      "/tenbin.glb",
+      (gltf) => {
+        const tenbin = gltf.scene;
+        tenbin.scale.set(0.05, 0.05, 0.05);
+        tenbin.position.y = 5;
+        this.scene.add(tenbin);
+      },
+      undefined,
+      (error) => {
+        alert(error);
+      }
+    );
+  }
+
+  addRocket() {
+    const loader = new GLTFLoader();
+    loader.load("/rocket.gltf", (gltf) => {
+      this.rocket = gltf.scene;
+      this.rocket.position.y = 0;
+      // this.scene.add(rocket);
+    });
+    this.isLaunch = false;
+  }
+
+  launch() {
+    this.isLaunch = true;
+  }
+
+  rocketAnimate(sec: number): void {
+    if (!this.isLaunch) return;
+    if (this.passedTime === undefined) {
+      this.passedTime = 0;
+    }
+    this.rocket.position.y += this.passedTime ** 2;
+    this.passedTime += 0.001;
+    this.rocket.rotation.y += 0.01;
+    // this.cube.position.y += this.passedTime ** 2;
+    // this.passedTime += 0.001;
+  }
+
   placeScene(ar_scene: ARScene) {
-    const nodes = ar_scene.makeObjectTree();
+    // const nodes = ar_scene.makeObjectTree();
+    const nodes = this.rocket;
 
     if (this.baseNode) {
       this.scene.remove(this.baseNode);
@@ -60,7 +139,8 @@ export class WebAR {
 
   changeScene(ar_scene: ARScene) {
     this.baseNode?.clear();
-    this.baseNode?.add(ar_scene.makeObjectTree());
+    // this.baseNode?.add(ar_scene.makeObjectTree());
+    this.baseNode?.add();
     this.arScene = ar_scene;
   }
 
@@ -80,6 +160,12 @@ export class WebAR {
     const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
     light.position.set(0.5, 1, 0.25);
     scene.add(light);
+
+    // スタート時に追加したいならここでscene.addをする
+    // this.scene.add(this.dome);
+    this.makeDome();
+    this.addConstellation();
+    this.addRocket();
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -113,16 +199,6 @@ export class WebAR {
 
     this.cursorNode = reticle;
 
-    // const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(
-    //     0,
-    //     0.1,
-    //     0
-    // );
-
-    // const material = new THREE.MeshPhongMaterial({
-    //     color: 0xffffff * Math.random(),
-    // });
-
     // this.baseNode.add(new THREE.Mesh(geometry, material));
 
     /* Camera */
@@ -132,19 +208,6 @@ export class WebAR {
       0.01,
       20
     );
-
-    // const onSelect = () => {
-    //     if (reticle.visible) {
-    //         const mesh = new THREE.Mesh(geometry, material);
-    //         reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-    //         mesh.scale.y = Math.random() * 2 + 1;
-    //         scene.add(mesh);
-    //     }
-    // }
-    // /* Controller */
-    // const controller = renderer.xr.getController(0);
-    // controller.addEventListener("select", onSelect);
-    // scene.add(controller);
 
     const onWindowResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -217,7 +280,8 @@ export class WebAR {
       }
       this.prevTime = timestamp;
 
-      this.arScene?.animate(Number(duration) / 1000);
+      // this.arScene?.animate(Number(duration) / 1000);
+      this.rocketAnimate(Number(duration) / 1000);
 
       this.delegate?.onRender?.(renderer);
       renderer.render(scene, camera);
