@@ -15,8 +15,11 @@
     "@tensorflow/tfjs": "^4.13.0",
     "ar.js": "^2.2.2",
     "cannon": "^0.6.2",
+    "eventing-bus": "^2.0.1",
+    "js-event-bus": "^1.1.1",
     "three": "^0.158.0",
     "three-csg": "^1.0.0",
+    "ts-event-bus": "^4.1.1",
     "vue": "^3.3.4",
     "vue-router": "^4.2.5"
   },

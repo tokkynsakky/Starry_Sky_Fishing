@@ -2,7 +2,12 @@
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import type { ARScene } from "./scene";
-import { GLTFLoader } from "three/examples/jsm/Addons.js";
+import {
+  CSS3DRenderer,
+  CSS3DObject,
+  GLTFLoader,
+  XRButton,
+} from "three/examples/jsm/Addons.js";
 
 export interface WebARDelegate {
   onRender?(renderer: THREE.Renderer): void;
@@ -14,10 +19,10 @@ export const useWebAR = (): WebAR => {
   return WebAR.getSingleton();
 };
 
-// const path = "./assets/starrySky3.jpg";
 export class WebAR {
   scene = new THREE.Scene();
   rocket?: THREE.Object3D;
+  tenbin?: THREE.Object3D;
   passedTime?: number;
   isLaunch?: boolean;
 
@@ -26,11 +31,13 @@ export class WebAR {
   baseNode?: THREE.Object3D;
   dome?: THREE.Object3D;
   delegate?: WebARDelegate;
-
   findPlane: boolean = true;
   prevTime: DOMHighResTimeStamp = -1;
-
   arScene?: ARScene;
+
+  // 当たり判定など
+  rocketBoundingBox?: THREE.Box3;
+  tenbinBoundingBox?: THREE.Box3;
 
   //シングルトンを作る（インスタンスがアプリケーション内で唯一であることを保証する）
   private static instance: WebAR | null = null;
@@ -49,7 +56,7 @@ export class WebAR {
     const texture = textureLoader.load("/starrySky3.jpg");
 
     // 必要なパラメータ
-    const domeRadius = 20; // ドームの半径
+    const domeRadius = 100; // ドームの半径
     const domeSegments = 32; // ドームの分割数
 
     // 材質
@@ -74,16 +81,43 @@ export class WebAR {
     this.scene.add(this.dome);
   }
 
+  checkCollision() {
+    if (this.rocketBoundingBox && this.tenbinBoundingBox) {
+      if (this.rocketBoundingBox.intersectsBox(this.tenbinBoundingBox)) {
+        // 衝突した場合の処理
+        alert("Rocket and Tenbin collided!");
+
+        // 画面遷移などの処理を実行
+        // this.delegate?.onCollisionDetected?.(); // 適切なデリゲートを呼び出すなど
+
+        // 画面遷移の例 (Vue Router を使用する場合)
+        // router.push("/main/collisionPage");
+      }
+    }
+  }
+
+  updateBoundingBoxes() {
+    if (this.rocket && this.tenbin) {
+      // ロケットのBoundingBoxを更新
+      const rocketBox = new THREE.Box3().setFromObject(this.rocket);
+      this.rocketBoundingBox = rocketBox;
+
+      // てんびんのBoundingBoxを更新
+      const tenbinBox = new THREE.Box3().setFromObject(this.tenbin);
+      this.tenbinBoundingBox = tenbinBox;
+    }
+  }
+
   addConstellation() {
     // 一応呼ばれていそう
     const loader = new GLTFLoader();
     loader.load(
       "/tenbin.glb",
       (gltf) => {
-        const tenbin = gltf.scene;
-        tenbin.scale.set(0.05, 0.05, 0.05);
-        tenbin.position.y = 5;
-        this.scene.add(tenbin);
+        this.tenbin = gltf.scene;
+        this.tenbin.scale.set(0.05, 0.05, 0.05);
+        this.tenbin.position.y = 5;
+        this.scene.add(this.tenbin);
       },
       undefined,
       (error) => {
@@ -111,15 +145,17 @@ export class WebAR {
     if (this.passedTime === undefined) {
       this.passedTime = 0;
     }
+
+    if (this.rocket === undefined) throw new Error("rocketがundefinedです〜");
     this.rocket.position.y += this.passedTime ** 2;
     this.passedTime += 0.001;
     this.rocket.rotation.y += 0.01;
-    // this.cube.position.y += this.passedTime ** 2;
-    // this.passedTime += 0.001;
+
+    this.checkCollision();
+    this.updateBoundingBoxes();
   }
 
   placeScene(ar_scene: ARScene) {
-    // const nodes = ar_scene.makeObjectTree();
     const nodes = this.rocket;
 
     if (this.baseNode) {
@@ -139,7 +175,6 @@ export class WebAR {
 
   changeScene(ar_scene: ARScene) {
     this.baseNode?.clear();
-    // this.baseNode?.add(ar_scene.makeObjectTree());
     this.baseNode?.add();
     this.arScene = ar_scene;
   }
@@ -166,6 +201,8 @@ export class WebAR {
     this.makeDome();
     this.addConstellation();
     this.addRocket();
+    // this.tenbinBoundingBox = new THREE.Box3().setFromObject(this.tenbin);
+    // this.rocketBoundingBox = new THREE.Box3().setFromObject(this.rocket);
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
