@@ -3,13 +3,15 @@
   <div class="viewTitle">
     <button style="z-index: 10" @click="startar">ロケットを設置する🚀</button>
     <button style="z-index: 10" @click="launch">ロケットを打ち上げる🚀</button>
-    <div id="overlay"></div>
+
+    <!-- <div id="overlay"></div> -->
+    <!-- <div id="css3dobject"></div> -->
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
-// import * as THREE from "three";
+import * as THREE from "three";
 // import * as Cannon from "cannon";
 import { useWebAR } from "../WebAR";
 import { TestScene } from "../scene";
