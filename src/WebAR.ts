@@ -10,6 +10,7 @@ import {
   XRButton,
   TextGeometry,
   TrackballControls,
+  type TrackballControlsEventMap,
 } from "three/examples/jsm/Addons.js";
 
 export interface WebARDelegate {
@@ -32,7 +33,8 @@ export class WebAR {
   tween: any;
 
   renderer?: THREE.WebGLRenderer;
-  renderer2?: THREE.WebGLRenderer;
+  renderer2?: CSS3DRenderer;
+  controls?: TrackballControls;
   cursorNode = new THREE.Object3D();
   baseNode?: THREE.Object3D;
   dome?: THREE.Object3D;
@@ -40,13 +42,6 @@ export class WebAR {
   findPlane: boolean = true;
   prevTime: DOMHighResTimeStamp = -1;
   arScene?: ARScene;
-  camera? = new THREE.PerspectiveCamera(); //ダミーカメラ。webxrが制御するため使われない
-  // camera? = new THREE.PerspectiveCamera( //ダミーカメラ。webxrが制御するため使われない
-  //   70,
-  //   window.innerWidth / window.innerHeight,
-  //   0.01,
-  //   20
-  // );
 
   // 当たり判定など
   rocketBoundingBox?: THREE.Box3;
@@ -61,15 +56,7 @@ export class WebAR {
     return WebAR.instance;
   }
 
-  private constructor() {
-    this.camera = new THREE.PerspectiveCamera(
-      //ダミーカメラ。webxrが制御するため使われない
-      70,
-      window.innerWidth / window.innerHeight,
-      0.01,
-      20
-    );
-  }
+  private constructor() {}
 
   makeDome() {
     // domeの画像関連のやつ
@@ -140,11 +127,11 @@ export class WebAR {
   }
 
   addCss3dObject(camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
-    const scene2 = new THREE.Scene();
+    this.scene2 = new THREE.Scene();
     const material = new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: 0xcccccc,
       wireframe: true,
-      wireframeLinewidth: 1,
+      wireframeLinewidth: 10,
       side: THREE.DoubleSide,
     });
 
@@ -156,16 +143,21 @@ export class WebAR {
       Math.random() * 0xffffff
     ).getStyle();
 
+    const textElement = document.createElement("div");
+    textElement.textContent = "hello world";
+    textElement.style.color = "#ccc";
+    element.appendChild(textElement);
+
     const object = new CSS3DObject(element);
     object.position.x = 0;
-    object.position.y = 0;
-    object.position.z = 0;
+    object.position.y = -30;
+    object.position.z = -100;
     object.rotation.x = 0;
     object.rotation.y = 0;
     object.rotation.z = 0;
-    object.scale.x = 1;
-    object.scale.y = 1;
-    scene2.add(object);
+    object.scale.x = 0.1;
+    object.scale.y = 0.1;
+    this.scene2.add(object);
 
     const geometry = new THREE.PlaneGeometry(100, 100);
     const mesh = new THREE.Mesh(geometry, material);
@@ -173,44 +165,27 @@ export class WebAR {
     mesh.rotation.copy(object.rotation);
     mesh.scale.copy(object.scale);
     scene.add(mesh);
+    // this.scene2.add(mesh);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-    });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    const renderer2 = new CSS3DRenderer();
-    renderer2.setSize(window.innerWidth, window.innerHeight);
-    renderer2.domElement.style.position = "absolute";
-    renderer2.domElement.style.top = "0";
-    document.body.appendChild(renderer2.domElement);
-
-    const controls = new TrackballControls(camera, renderer2.domElement);
-
-    window.addEventListener("resize", this.onWindowResize);
-  }
-
-  onWindowResize() {
-    if (this.camera === undefined) {
-      alert("camera is undefined");
-      throw new Error("camera is undefined");
-    }
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
-
-    if (this.renderer === undefined || this.renderer2 === undefined) {
-      const text = "renderer is undefined";
-      alert(text);
-      throw new Error(text);
-    }
-
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer2.setSize(window.innerWidth, window.innerHeight);
+    // const renderer = new THREE.WebGLRenderer({
+    //   antialias: true,
+    // });
+    // renderer.setPixelRatio(window.devicePixelRatio);
     // renderer.setSize(window.innerWidth, window.innerHeight);
-    // renderer2.setSize(window.innerWidth, window.innerHeight);
+    // document.body.appendChild(renderer.domElement);
+
+    this.renderer2 = new CSS3DRenderer();
+    this.renderer2.setSize(window.innerWidth, window.innerHeight);
+    this.renderer2.domElement.style.position = "absolute";
+    this.renderer2.domElement.style.top = "0";
+    // document.body.appendChild(this.renderer2.domElement);
+    document
+      .getElementById("css3dobject")
+      ?.appendChild(this.renderer2.domElement);
+
+    this.controls = new TrackballControls(camera, this.renderer2.domElement);
   }
+
   addRocket() {
     const loader = new GLTFLoader();
     loader.load("/rocket.gltf", (gltf) => {
@@ -283,26 +258,25 @@ export class WebAR {
     scene.add(light);
 
     /* Camera */
-    // const camera = new THREE.PerspectiveCamera( //ダミーカメラ。webxrが制御するため使われない
-    // this.camera = new THREE.PerspectiveCamera( //ダミーカメラ。webxrが制御するため使われない
-    //   70,
-    //   window.innerWidth / window.innerHeight,
-    //   0.01,
-    //   20
-    // );
+    const camera = new THREE.PerspectiveCamera( //ダミーカメラ。webxrが制御するため使われない
+      70,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      20
+    );
 
     // スタート時に追加したいならここでscene.addをする
     // this.makeDome(); domeは一度不要なのでコメントアウトしておく
     this.addConstellation();
     this.addRocket();
+    this.addCss3dObject(camera, scene);
 
     /* RENDERER */
-    // const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.xr.enabled = true;
-    container.appendChild(this.renderer.domElement);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    container.appendChild(renderer.domElement);
 
     // ===== ===== ===== ===== ===== css3dobjectについて
 
@@ -336,7 +310,7 @@ export class WebAR {
     const overray_element = document.getElementById(overlay_dom);
 
     /* ARButton */
-    const arbutton = ARButton.createButton(this.renderer, {
+    const arbutton = ARButton.createButton(renderer, {
       requiredFeatures: ["hit-test"],
       domOverlay: { root: overray_element! },
     });
@@ -358,29 +332,28 @@ export class WebAR {
 
     this.cursorNode = reticle;
 
-    // const onWindowResize = () => {
-    //   camera.aspect = window.innerWidth / window.innerHeight;
-    //   camera.updateProjectionMatrix();
+    const onWindowResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
 
-    //   renderer.setSize(window.innerWidth, window.innerHeight);
-    // };
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      this.renderer2?.setSize(window.innerWidth, window.innerHeight);
+    };
     /* ウィンドウリサイズ対応 */
-    window.addEventListener("resize", this.onWindowResize);
+    window.addEventListener("resize", onWindowResize);
 
     let hitTestSource: XRHitTestSource | null = null;
     let hitTestSourceRequested = false;
 
     const render = (timestamp: number, frame: XRFrame) => {
       if (frame) {
-        if (this.renderer === undefined)
-          throw new Error("renderer is undefined 2");
-        const referenceSpace = this.renderer.xr.getReferenceSpace();
+        const referenceSpace = renderer.xr.getReferenceSpace();
         if (!referenceSpace) {
           console.log("sorry cannot get renderer referenceSpace");
           return;
         }
 
-        const session = this.renderer.xr.getSession();
+        const session = renderer.xr.getSession();
         if (!session) {
           console.log("sorry cannot get renderer session");
           return;
@@ -435,17 +408,19 @@ export class WebAR {
       this.rocketAnimate(Number(duration) / 1000);
       // createSmoke(this.rocket);
 
-      if (this.renderer === undefined)
-        throw new Error("renderer is undefined 3");
-      if (this.camera === undefined) throw new Error("camera is undefined 3");
-      this.delegate?.onRender?.(this.renderer);
-      this.renderer.render(scene, this.camera);
+      this.delegate?.onRender?.(renderer);
+      renderer.render(scene, camera);
+
+      if (this.scene2 === undefined) alert("scene2 is undefined");
+      if (this.renderer2 === undefined) alert("renderer2 is undefined");
+      this.renderer2.render(this.scene2, camera);
+      this.controls?.update();
       // ===== ===== ===== ===== ===== css3dobjectについて
       // css3drenderer.render(this.scene2, camera);
       // ===== ===== ===== ===== =====
     };
 
     // フレームごとに実行されるアニメーション
-    this.renderer.setAnimationLoop(render);
+    renderer.setAnimationLoop(render);
   }
 }
