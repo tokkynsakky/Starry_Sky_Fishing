@@ -43,3 +43,5 @@ export default defineConfig({
 //     }
 //   }
 // })
+
+// scp -P 1322 -r dist/* e215711@shell.ie.u-ryukyu.ac.jp:~/public_html/Starry-Sky-Fishing

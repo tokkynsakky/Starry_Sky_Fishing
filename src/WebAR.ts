@@ -2,11 +2,13 @@
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import type { ARScene } from "./scene";
+import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import {
   CSS3DRenderer,
   CSS3DObject,
   GLTFLoader,
   XRButton,
+  TextGeometry,
 } from "three/examples/jsm/Addons.js";
 
 export interface WebARDelegate {
@@ -21,13 +23,14 @@ export const useWebAR = (): WebAR => {
 
 export class WebAR {
   scene = new THREE.Scene();
+  scene2 = new THREE.Scene();
   rocket?: THREE.Object3D;
   tenbin?: THREE.Object3D;
   passedTime?: number;
   isLaunch?: boolean;
   tween: any;
 
-  // // renderer?: THREE.WebGLRenderer;
+  renderer?: THREE.WebGLRenderer;
   cursorNode = new THREE.Object3D();
   baseNode?: THREE.Object3D;
   dome?: THREE.Object3D;
@@ -85,14 +88,7 @@ export class WebAR {
   checkCollision() {
     if (this.rocketBoundingBox && this.tenbinBoundingBox) {
       if (this.rocketBoundingBox.intersectsBox(this.tenbinBoundingBox)) {
-        // 衝突した場合の処理
         alert("Rocket and Tenbin collided!");
-
-        // 画面遷移などの処理を実行
-        // this.delegate?.onCollisionDetected?.(); // 適切なデリゲートを呼び出すなど
-
-        // 画面遷移の例 (Vue Router を使用する場合)
-        // router.push("/main/collisionPage");
       }
     }
   }
@@ -110,7 +106,6 @@ export class WebAR {
   }
 
   addConstellation() {
-    // 一応呼ばれていそう
     const loader = new GLTFLoader();
     loader.load(
       "/tenbin.glb",
@@ -156,26 +151,6 @@ export class WebAR {
     this.updateBoundingBoxes();
   }
 
-  getParticle(): void {
-    let p;
-    if (particleArray.length > 0) {
-      p = particleArray.pop();
-    } else {
-      p = new Particle();
-    }
-    return p;
-  }
-
-  createSmoke(rocket): void {
-    let p = this.getParticle();
-    dropParticle(p, rocket);
-  }
-
-  createFlyingParticles(): void {
-    let p = this.getParticle();
-    flyParticle(p);
-  }
-
   placeScene(ar_scene: ARScene) {
     const nodes = this.rocket;
 
@@ -188,6 +163,7 @@ export class WebAR {
       this.baseNode.quaternion,
       this.baseNode.scale
     );
+    if (nodes === undefined) throw new Error("nodes is undefined");
     this.baseNode.add(nodes);
     this.scene.add(this.baseNode!);
 
@@ -217,13 +193,18 @@ export class WebAR {
     light.position.set(0.5, 1, 0.25);
     scene.add(light);
 
+    /* Camera */
+    const camera = new THREE.PerspectiveCamera( //ダミーカメラ。webxrが制御するため使われない
+      70,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      20
+    );
+
     // スタート時に追加したいならここでscene.addをする
-    // this.scene.add(this.dome);
-    this.makeDome();
+    // this.makeDome(); domeは一度不要なのでコメントアウトしておく
     this.addConstellation();
     this.addRocket();
-    // this.tenbinBoundingBox = new THREE.Box3().setFromObject(this.tenbin);
-    // this.rocketBoundingBox = new THREE.Box3().setFromObject(this.rocket);
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -231,6 +212,35 @@ export class WebAR {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     container.appendChild(renderer.domElement);
+
+    // ===== ===== ===== ===== ===== css3dobjectについて
+
+    const element = document.createElement("div");
+    element.className = "element";
+    element.style.backgroundColor =
+      "rgba(0,127,127," + (Math.random() * 0.5 + 0.25) + ")";
+
+    const text = document.createElement("div");
+    text.textContent = "hello world";
+    text.style.color = "white";
+    element.appendChild(text);
+    document.getElementById("css3dobject")?.appendChild(element);
+
+    const objectCSS = new CSS3DObject(element);
+    objectCSS.position.x = 0;
+    objectCSS.position.y = 0;
+    objectCSS.position.z = 0;
+    // this.scene2.add(objectCSS);
+    this.scene2.add(objectCSS);
+
+    const css3drenderer = new CSS3DRenderer();
+    css3drenderer.setSize(window.innerWidth, window.innerHeight);
+    // element.appendChild(css3drenderer.domElement);
+    const elem = document.getElementById("css3dobject");
+    if (elem === undefined) alert("elem is undefined");
+    elem?.appendChild(css3drenderer.domElement);
+
+    // ===== ===== ===== ===== =====
 
     const overray_element = document.getElementById(overlay_dom);
 
@@ -256,16 +266,6 @@ export class WebAR {
     scene.add(reticle);
 
     this.cursorNode = reticle;
-
-    // this.baseNode.add(new THREE.Mesh(geometry, material));
-
-    /* Camera */
-    const camera = new THREE.PerspectiveCamera( //ダミーカメラ。webxrが制御するため使われない
-      70,
-      window.innerWidth / window.innerHeight,
-      0.01,
-      20
-    );
 
     const onWindowResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -344,129 +344,12 @@ export class WebAR {
 
       this.delegate?.onRender?.(renderer);
       renderer.render(scene, camera);
+      // css3dobjectについて
+      // css3drenderer.render(this.scene2, camera);
+      css3drenderer.render(this.scene2, camera);
     };
+
     // フレームごとに実行されるアニメーション
     renderer.setAnimationLoop(render);
   }
 }
-
-// class Particle {
-//   private isFlying;
-//   private geometry;
-//   private material;
-//   private mesh;
-
-//   constructor() {
-//     this.isFlying = false;
-
-//     var scale = 20 + Math.random() * 20;
-//     var nLines = 3 + Math.floor(Math.random() * 5);
-//     var nRows = 3 + Math.floor(Math.random() * 5);
-//     this.geometry = new THREE.SphereGeometry(scale, nLines, nRows);
-
-//     this.material = new THREE.MeshLambertMaterial({
-//       color: 0xe3e3e3,
-//       // shading: THREE.FlatShading,
-//       transparent: true,
-//     });
-
-//     this.mesh = new THREE.Mesh(this.geometry, this.material);
-//     recycleParticle(this);
-//   }
-// }
-
-// let particleArray = [],
-//   slowMoFactor = 1;
-
-// let cloudTargetPosX,
-//   cloudTargetPosY,
-//   cloudTargetSpeed,
-//   cloudTargetColor,
-//   cloudSlowMoFactor = 0.65;
-
-// const dropParticle = (p, rocket) => {
-//   p.mesh.material.opacity = 1;
-//   p.mesh.position.x = 0;
-//   p.mesh.position.y = rocket.mesh.position.y - 80;
-//   p.mesh.position.z = 0;
-//   var s = Math.random(0.2) + 0.35;
-//   p.mesh.scale.set(0.4 * s, 0.4 * s, 0.4 * s);
-//   cloudTargetPosX = 0;
-//   cloudTargetPosY = rocket.mesh.position.y - 500;
-//   cloudTargetSpeed = 0.8 + Math.random() * 0.6;
-//   cloudTargetColor = 0xa3a3a3;
-
-//   TweenMax.to(p.mesh.position, 1.3 * cloudTargetSpeed * cloudSlowMoFactor, {
-//     x: cloudTargetPosX,
-//     y: cloudTargetPosY,
-//     ease: Linear.easeNone,
-//     onComplete: recycleParticle,
-//     onCompleteParams: [p],
-//   });
-
-//   TweenMax.to(p.mesh.scale, cloudTargetSpeed * cloudSlowMoFactor, {
-//     x: s * 1.8,
-//     y: s * 1.8,
-//     z: s * 1.8,
-//     ease: Linear.ease,
-//   });
-// };
-
-// const getParticle = () => {
-//   let p;
-//   if (particleArray.length > 0) {
-//     p = particleArray.pop();
-//   } else {
-//     p = new Particle();
-//   }
-//   return p;
-// };
-
-// const createSmoke = (rocket) => {
-//   let p = getParticle();
-//   dropParticle(p, rocket);
-// };
-
-// const createFlyingParticles = () => {
-//   let p = getParticle();
-//   flyParticle(p);
-// };
-
-// function recycleParticle(p) {
-//   p.mesh.position.x = 0;
-//   p.mesh.position.y = 0;
-//   p.mesh.position.z = 0;
-//   p.mesh.rotation.x = Math.random() * Math.PI * 2;
-//   p.mesh.rotation.y = Math.random() * Math.PI * 2;
-//   p.mesh.rotation.z = Math.random() * Math.PI * 2;
-//   p.mesh.scale.set(0.1, 0.1, 0.1);
-//   p.mesh.material.opacity = 0;
-//   p.color = 0xe3e3e3;
-//   p.mesh.material.color.set(p.color);
-//   p.material.needUpdate = true;
-//   scene.add(p.mesh);
-//   particleArray.push(p);
-// }
-// function flyParticle(p) {
-//   var targetPosX, targetPosY, targetSpeed, targetColor;
-//   p.mesh.material.opacity = 1;
-//   p.mesh.position.x = -1000 + Math.random() * 2000;
-//   p.mesh.position.y = 100 + Math.random() * 2000;
-//   p.mesh.position.z = -1000 + Math.random() * 1500;
-
-//   var s = Math.random() * 0.2;
-//   p.mesh.scale.set(s, s, s);
-
-//   targetPosX = 0;
-//   targetPosY = -p.mesh.position.y - 2500;
-//   targetSpeed = 1 + Math.random() * 2;
-//   targetColor = 0xe3e3e3;
-
-//   TweenMax.to(p.mesh.position, targetSpeed * slowMoFactor, {
-//     x: targetPosX,
-//     y: targetPosY,
-//     ease: Linear.easeNone,
-//     onComplete: recycleParticle,
-//     onCompleteParams: [p],
-//   });
-// }
