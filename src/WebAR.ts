@@ -215,30 +215,30 @@ export class WebAR {
 
     // ===== ===== ===== ===== ===== css3dobjectについて
 
-    const element = document.createElement("div");
-    element.className = "element";
-    element.style.backgroundColor =
-      "rgba(0,127,127," + (Math.random() * 0.5 + 0.25) + ")";
+    // const element = document.createElement("div");
+    // element.className = "element";
+    // element.style.backgroundColor =
+    //   "rgba(0,127,127," + (Math.random() * 0.5 + 0.25) + ")";
 
-    const text = document.createElement("div");
-    text.textContent = "hello world";
-    text.style.color = "white";
-    element.appendChild(text);
-    document.getElementById("css3dobject")?.appendChild(element);
+    // const text = document.createElement("div");
+    // text.textContent = "hello world";
+    // text.style.color = "white";
+    // element.appendChild(text);
+    // document.getElementById("css3dobject")?.appendChild(element);
 
-    const objectCSS = new CSS3DObject(element);
-    objectCSS.position.x = 0;
-    objectCSS.position.y = 0;
-    objectCSS.position.z = 0;
+    // const objectCSS = new CSS3DObject(element);
+    // objectCSS.position.x = 0;
+    // objectCSS.position.y = 0;
+    // objectCSS.position.z = 0;
+    // // this.scene2.add(objectCSS);
     // this.scene2.add(objectCSS);
-    this.scene2.add(objectCSS);
 
-    const css3drenderer = new CSS3DRenderer();
-    css3drenderer.setSize(window.innerWidth, window.innerHeight);
-    // element.appendChild(css3drenderer.domElement);
-    const elem = document.getElementById("css3dobject");
-    if (elem === undefined) alert("elem is undefined");
-    elem?.appendChild(css3drenderer.domElement);
+    // const css3drenderer = new CSS3DRenderer();
+    // css3drenderer.setSize(window.innerWidth, window.innerHeight);
+    // // element.appendChild(css3drenderer.domElement);
+    // const elem = document.getElementById("css3dobject");
+    // if (elem === undefined) alert("elem is undefined");
+    // elem?.appendChild(css3drenderer.domElement);
 
     // ===== ===== ===== ===== =====
 
@@ -344,9 +344,9 @@ export class WebAR {
 
       this.delegate?.onRender?.(renderer);
       renderer.render(scene, camera);
-      // css3dobjectについて
+      // ===== ===== ===== ===== ===== css3dobjectについて
       // css3drenderer.render(this.scene2, camera);
-      css3drenderer.render(this.scene2, camera);
+      // ===== ===== ===== ===== =====
     };
 
     // フレームごとに実行されるアニメーション
