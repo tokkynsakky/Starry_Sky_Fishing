@@ -128,12 +128,6 @@ export class WebAR {
 
   addCss3dObject(camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
     this.scene2 = new THREE.Scene();
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xcccccc,
-      wireframe: true,
-      wireframeLinewidth: 10,
-      side: THREE.DoubleSide,
-    });
 
     const element = document.createElement("div");
     element.style.width = "100px";
@@ -158,6 +152,13 @@ export class WebAR {
     object.scale.x = 0.1;
     object.scale.y = 0.1;
     this.scene2.add(object);
+
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xcccccc,
+      wireframe: true,
+      wireframeLinewidth: 10,
+      side: THREE.DoubleSide,
+    });
 
     const geometry = new THREE.PlaneGeometry(100, 100);
     const mesh = new THREE.Mesh(geometry, material);
