@@ -3,10 +3,9 @@ import * as THREE from "three";
 // const log = useLogger();
 
 export interface ARScene {
-  makeObjectTree(): THREE.Object3D;
-  animate(sec: number): void;
-
-  name(): string;
+  // makeObjectTree(): THREE.Object3D;
+  // animate(sec: number): void;
+  // name(): string;
 }
 
 export class TestScene implements ARScene {
@@ -15,25 +14,28 @@ export class TestScene implements ARScene {
   name() {
     return "test";
   }
-  makeObjectTree(): THREE.Object3D {
-    // log.info("make object tree", this.name())
-    const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1).translate(0, 0.05, 0);
 
-    const material = new THREE.MeshPhongMaterial({
-      color: 0xffffff * Math.random(),
-    });
-    const cube = new THREE.Mesh(geometry, material);
-    this.cube = cube;
-    return cube;
-  }
+  // これもういらなくね?
+  // makeObjectTree(): THREE.Object3D {
+  //   // log.info("make object tree", this.name())
+  //   const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1).translate(0, 0.05, 0);
 
-  animate(sec: number): void {
-    if (!this.cube) return;
+  //   const material = new THREE.MeshPhongMaterial({
+  //     color: 0xffffff * Math.random(),
+  //   });
+  //   const cube = new THREE.Mesh(geometry, material);
+  //   this.cube = cube;
+  //   return cube;
+  // }
 
-    // 立方体を回転させるアニメーション
-    //this.cube.rotation.x += 0.01;
-    this.cube.rotation.y += 1 * sec;
-  }
+  // // これもいらなくね?
+  // animate(sec: number): void {
+  //   if (!this.cube) return;
+
+  //   // 立方体を回転させるアニメーション
+  //   //this.cube.rotation.x += 0.01;
+  //   this.cube.rotation.y += 1 * sec;
+  // }
 }
 
 export class TestScene2 implements ARScene {

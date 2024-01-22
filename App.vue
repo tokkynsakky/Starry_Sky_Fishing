@@ -9,11 +9,11 @@
 
 <script lang="ts">
 import { ref, computed, defineComponent, type DefineComponent } from "vue";
-import TitleScreen from "./views/TitleScreen.vue";
-import MainScreen from "./views/MainScreen.vue";
-import CaptchaRocket from "./views/CaptchaRocket.vue";
-import GenerateRocket from "./views/GenerateRocket.vue";
-import LaunchRocket from "./views/LaunchRocket.vue";
+import TitleScreen from "./src/views/TitleScreen.vue";
+import MainScreen from "./src/views/MainScreen.vue";
+import CaptchaRocket from "./src/views/CaptchaRocket.vue";
+import GenerateRocket from "./src/views/GenerateRocket.vue";
+import LaunchRocket from "./src/views/launchrocket.vue";
 
 export default defineComponent({
   components: {

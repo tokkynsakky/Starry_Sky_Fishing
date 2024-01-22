@@ -412,7 +412,10 @@ export class WebAR {
       renderer.render(scene, camera);
 
       if (this.scene2 === undefined) alert("scene2 is undefined");
-      if (this.renderer2 === undefined) alert("renderer2 is undefined");
+      if (this.renderer2 === undefined) {
+        alert("renderer2 is undefined");
+        throw new Error("renderer2 is undefined");
+      }
       this.renderer2.render(this.scene2, camera);
       this.controls?.update();
       // ===== ===== ===== ===== ===== css3dobjectについて

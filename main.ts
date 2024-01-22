@@ -3,11 +3,11 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import { createRouter, createWebHistory } from "vue-router";
-import TitleScreen from "./views/TitleScreen.vue";
-import MainScreen from "./views/MainScreen.vue";
-import CaptchaRocket from "./views/CaptchaRocket.vue";
-import GenerateRocket from "./views/GenerateRocket.vue";
-import LaunchRocket from "./views/LaunchRocket.vue";
+import TitleScreen from "./src/views/TitleScreen.vue";
+import MainScreen from "./src/views/MainScreen.vue";
+import CaptchaRocket from "./src/views/CaptchaRocket.vue";
+import GenerateRocket from "./src/views/GenerateRocket.vue";
+import LaunchRocket from "./src/views/LaunchRocket.vue";
 
 const router = createRouter({
   history: createWebHistory(),

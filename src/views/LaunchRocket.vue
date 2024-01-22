@@ -25,6 +25,7 @@ export default defineComponent({
     let scene: TestScene;
 
     onMounted(() => {
+      // webar.start("css3dobject");
       webar.start(overlay_dom);
     });
 
