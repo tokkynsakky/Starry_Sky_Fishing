@@ -23,7 +23,7 @@ export class WebAR {
   scene = new THREE.Scene();
   rocket?: THREE.Object3D;
   tenbin?: THREE.Object3D;
-  tenbin2?: THREE.Object3D;
+  //tenbin2?: THREE.Object3D;
   passedTime?: number;
   isLaunch?: boolean;
   tween: any;
@@ -101,20 +101,20 @@ export class WebAR {
       this.scene.remove(this.rocket);
     }
     if (this.tenbin) {
-      this.tenbin.visible = false;
-      this.scene.remove(this.tenbin);
+      //this.tenbin.visible = false;
+      //this.scene.remove(this.tenbin);
     }
   
     // 2. 新しいテンビンを同じ位置に再表示する
-    this.addNewTenbin();
+    // this.addNewTenbin();
   
     // 3. 新しいテンビンに自由落下アニメーションを適用する
-    if (this.tenbin2) {
-      this.tenbin2.position.y = 5; // 初期位置（適切な位置に設定する必要があります）
-      this.tenbin2.visible = true;
+    if (this.tenbin) {
+      this.tenbin.position.y = 5; // 初期位置
+      this.tenbin.visible = true;
       this.animateNewTenbin();
     }
-  }
+   }
   
   // 新しいテンビンに自由落下アニメーションを適用する
   animateNewTenbin() {
@@ -123,7 +123,7 @@ export class WebAR {
     const update = () => {
       const delta = clock.getDelta();
   
-      if (!this.tenbin2) {
+      if (!this.tenbin) {
         console.error("tenbin2オブジェクトが定義されていません");
         return;
       }
@@ -131,19 +131,19 @@ export class WebAR {
       const gravity = new THREE.Vector3(0, -0.01, 0);
       const acceleration = gravity.clone();
   
-      const tenbinVelocity = this.tenbin2.userData.velocity || new THREE.Vector3();
+      const tenbinVelocity = this.tenbin.userData.velocity || new THREE.Vector3();
       tenbinVelocity.addScaledVector(acceleration, delta);
-      this.tenbin2.userData.velocity = tenbinVelocity;
+      this.tenbin.userData.velocity = tenbinVelocity;
   
       // 速度に応じて位置を直接更新
-      this.tenbin2.position.y += tenbinVelocity.y * delta;
+      this.tenbin.position.y += tenbinVelocity.y * delta;
   
-      if (this.tenbin2.position.y <= 0) {
-        this.tenbin2.position.y = 0;
+      if (this.tenbin.position.y <= 0) {
+        this.tenbin.position.y = 0;
 
         // アニメーションの終了処理を追加
-        this.scene.remove(this.tenbin2);
-        this.tenbin2 = undefined; // 重要: tenbin2 を undefined に設定
+        this.scene.remove(this.tenbin);
+        this.tenbin = undefined; // 重要: tenbin2 を undefined に設定
 
         // 新しいtenbinを作成してシーンに追加
       this.addNewTenbinAtGround();
@@ -160,10 +160,12 @@ export class WebAR {
   // 新しいtenbinを作成してシーンに追加するメソッド
   addNewTenbinAtGround() {
     const loader = new GLTFLoader();
-    loader.load("/tenbin.glb", (gltf) => {
+    loader.load("/ph2.glb", (gltf) => {
       this.tenbin = gltf.scene;
-      this.tenbin.scale.set(0.01, 0.01, 0.01);
+      this.tenbin.scale.set(0.04, 0.04, 0.04);
+      this.tenbin.position.z = -3;
       this.tenbin.position.y = 0; // 地面の高さに設定
+      this.tenbin.rotation.x = Math.PI / 2; // 90度回転
       this.scene.add(this.tenbin);
     }, undefined, (error) => {
       console.error(error);
@@ -198,11 +200,12 @@ export class WebAR {
     // 一応呼ばれていそう
     const loader = new GLTFLoader();
     loader.load(
-      "/tenbin.glb",
+      "/ph2.glb",
       (gltf) => {
         this.tenbin = gltf.scene;
         this.tenbin.scale.set(0.05, 0.05, 0.05);
         this.tenbin.position.y = 5;
+        this.tenbin.rotation.x = Math.PI; // 180度回転
         this.scene.add(this.tenbin);
       },
       undefined,
@@ -212,20 +215,25 @@ export class WebAR {
     );
   }
 
-  addNewTenbin() {
-    const loader = new GLTFLoader();
-    loader.load("/tenbin.glb", (gltf) => {
-      this.tenbin2 = gltf.scene;
-      this.tenbin2.scale.set(0.05, 0.05, 0.05);
+  // addNewTenbin() {
+  //   const loader = new GLTFLoader();
+  //   loader.load("/tenbin.glb", (gltf) => {
+  //     this.tenbin2 = gltf.scene;
+  //     this.tenbin2.scale.set(0.05, 0.05, 0.05);
   
-      // ここで初期位置をコピー
-      this.tenbin2.position.copy(new THREE.Vector3(0, 5, 0));
+  //     // ここで初期位置をコピー
+  //     this.tenbin2.position.copy(new THREE.Vector3(0, 5, 0));
+
+
+  //     // const beforTenbinPos = this.tenbin?.position
+  //     // if(beforTenbinPos === undefined) throw new Error('tenbinPos is undefined')
+  //     // this.tenbin2.position.copy(beforTenbinPos);
   
-      this.scene.add(this.tenbin2);
-    }, undefined, (error) => {
-      console.error(error);
-    });
-  }
+  //     this.scene.add(this.tenbin2);
+  //   }, undefined, (error) => {
+  //     console.error(error);
+  //   });
+  //}
   
 
   
@@ -306,7 +314,7 @@ export class WebAR {
     /* Light */
     const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
     light.position.set(0.5, 1, 0.25);
-    scene.add(light);
+    this.scene.add(light);
 
     // スタート時に追加したいならここでscene.addをする
     // this.scene.add(this.dome);
