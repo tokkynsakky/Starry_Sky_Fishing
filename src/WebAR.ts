@@ -11,6 +11,7 @@ import {
   TextGeometry,
   TrackballControls,
   type TrackballControlsEventMap,
+  ThreeMFLoader,
 } from "three/examples/jsm/Addons.js";
 
 export interface WebARDelegate {
@@ -31,6 +32,7 @@ export class WebAR {
   passedTime?: number;
   isLaunch?: boolean;
   tween: any;
+  textMesh?: THREE.Mesh;
 
   renderer?: THREE.WebGLRenderer;
   renderer2?: CSS3DRenderer;
@@ -47,6 +49,10 @@ export class WebAR {
   rocketBoundingBox?: THREE.Box3;
   tenbinBoundingBox?: THREE.Box3;
 
+  constellationList?: Array<string> = ["tenbin"];
+  constellationMap?: Map<string, THREE.Mesh>;
+  text3DMaterialMap?: Map<string, THREE.Mesh>;
+
   //シングルトンを作る（インスタンスがアプリケーション内で唯一であることを保証する）
   private static instance: WebAR | null = null;
   public static getSingleton(): WebAR {
@@ -56,7 +62,34 @@ export class WebAR {
     return WebAR.instance;
   }
 
-  private constructor() {}
+  private constructor() {
+    this.constellationMap = new Map([["tenbin", new THREE.Mesh()]]);
+    this.text3DMaterialMap = new Map([["tenbin", new THREE.Mesh()]]);
+  }
+
+  constellationSetter() {
+    this.constellationList = ["tenbin"];
+    for (const constellation of this.constellationList) {
+    }
+  }
+
+  addConstellation(glbName: string, x: number, y: number, z: number) {
+    const loader = new GLTFLoader();
+    loader.load(
+      "/" + glbName + ".glb",
+      (gltf) => {
+        this.tenbin = gltf.scene;
+        this.tenbin.scale.set(x, y, z);
+        // this.tenbin.scale.set(0.05, 0.05, 0.05);
+        this.tenbin.position.y = 5;
+        this.scene.add(this.tenbin);
+      },
+      undefined,
+      (error) => {
+        alert(error);
+      }
+    );
+  }
 
   makeDome() {
     // domeの画像関連のやつ
@@ -109,23 +142,67 @@ export class WebAR {
     }
   }
 
-  addConstellation() {
-    const loader = new GLTFLoader();
-    loader.load(
-      "/tenbin.glb",
-      (gltf) => {
-        this.tenbin = gltf.scene;
-        this.tenbin.scale.set(0.05, 0.05, 0.05);
-        this.tenbin.position.y = 5;
-        this.scene.add(this.tenbin);
-      },
-      undefined,
-      (error) => {
-        alert(error);
-      }
-    );
+  // addConstellation() {
+  //   const loader = new GLTFLoader();
+  //   loader.load(
+  //     "/tenbin.glb",
+  //     (gltf) => {
+  //       this.tenbin = gltf.scene;
+  //       this.tenbin.scale.set(0.05, 0.05, 0.05);
+  //       this.tenbin.position.y = 5;
+  //       this.scene.add(this.tenbin);
+  //     },
+  //     undefined,
+  //     (error) => {
+  //       alert(error);
+  //     }
+  //   );
+  // }
+
+  async add3DTextMaterial(text3d: string) {
+    const fontLoader = new FontLoader();
+    const fontPath = "/jpFonts/Rounded Mplus 1c Medium_Regular.json";
+    // const font = await fontLoader.load(fontPath);
+    const font = await fontLoader.loadAsync(fontPath);
+    const textGeometry = new TextGeometry(text3d, {
+      font: font,
+      size: 0.2,
+      height: 0.1,
+      curveSegments: 12,
+      bevelEnabled: true,
+      bevelThickness: 0.01,
+      bevelSize: 0.01,
+      bevelOffset: 0,
+      bevelSegments: 3,
+    });
+
+    // textGeometry.center();
+    const textMaterial = new THREE.MeshStandardMaterial();
+    this.textMesh = new THREE.Mesh(textGeometry, textMaterial);
+    this.textMesh.castShadow = true;
+    this.textMesh.position.z = -10;
+    this.scene.add(this.textMesh);
   }
 
+  // animate3DTextMaterial(pos: THREE.Vector3) {
+  animate3DTextMaterial() {
+    if (this.textMesh?.position === undefined)
+      throw new Error("textMesh is undefined");
+    if (
+      this.rocket?.position.x === undefined ||
+      this.rocket.position.y === undefined ||
+      this.rocket.position.z === undefined
+    )
+      throw new Error("rocket position is undefined");
+    this.textMesh.position.x = this.rocket?.position.x;
+    this.textMesh.position.y = this.rocket?.position.y;
+    this.textMesh.position.z = this.rocket?.position.z;
+    // this.textMesh.position.x = pos.x;
+    // this.textMesh.position.y = pos.y;
+    // this.textMesh.position.z = pos.z;
+  }
+
+  // 使ってないのですが、サンプルとして残しておきたいです。
   addCss3dObject(camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
     this.scene2 = new THREE.Scene();
 
@@ -166,14 +243,6 @@ export class WebAR {
     mesh.rotation.copy(object.rotation);
     mesh.scale.copy(object.scale);
     scene.add(mesh);
-    // this.scene2.add(mesh);
-
-    // const renderer = new THREE.WebGLRenderer({
-    //   antialias: true,
-    // });
-    // renderer.setPixelRatio(window.devicePixelRatio);
-    // renderer.setSize(window.innerWidth, window.innerHeight);
-    // document.body.appendChild(renderer.domElement);
 
     this.renderer2 = new CSS3DRenderer();
     this.renderer2.setSize(window.innerWidth, window.innerHeight);
@@ -184,7 +253,7 @@ export class WebAR {
       .getElementById("css3dobject")
       ?.appendChild(this.renderer2.domElement);
 
-    this.controls = new TrackballControls(camera, this.renderer2.domElement);
+    // this.controls = new TrackballControls(camera, this.renderer2.domElement);
   }
 
   addRocket() {
@@ -241,7 +310,9 @@ export class WebAR {
     this.arScene = ar_scene;
   }
 
-  start(overlay_dom: string) {
+  // animate() {}
+
+  async start(overlay_dom: string) {
     /* Container */
     const container = document.getElementById("threejs");
     if (!container) {
@@ -268,9 +339,9 @@ export class WebAR {
 
     // スタート時に追加したいならここでscene.addをする
     // this.makeDome(); domeは一度不要なのでコメントアウトしておく
-    this.addConstellation();
+    this.addConstellation("tenbin", 0.05, 0.05, 0.05);
     this.addRocket();
-    this.addCss3dObject(camera, scene);
+    await this.add3DTextMaterial("てんぷテキスト");
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -278,35 +349,6 @@ export class WebAR {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.xr.enabled = true;
     container.appendChild(renderer.domElement);
-
-    // ===== ===== ===== ===== ===== css3dobjectについて
-
-    // const element = document.createElement("div");
-    // element.className = "element";
-    // element.style.backgroundColor =
-    //   "rgba(0,127,127," + (Math.random() * 0.5 + 0.25) + ")";
-
-    // const text = document.createElement("div");
-    // text.textContent = "hello world";
-    // text.style.color = "white";
-    // element.appendChild(text);
-    // document.getElementById("css3dobject")?.appendChild(element);
-
-    // const objectCSS = new CSS3DObject(element);
-    // objectCSS.position.x = 0;
-    // objectCSS.position.y = 0;
-    // objectCSS.position.z = 0;
-    // // this.scene2.add(objectCSS);
-    // this.scene2.add(objectCSS);
-
-    // const css3drenderer = new CSS3DRenderer();
-    // css3drenderer.setSize(window.innerWidth, window.innerHeight);
-    // // element.appendChild(css3drenderer.domElement);
-    // const elem = document.getElementById("css3dobject");
-    // if (elem === undefined) alert("elem is undefined");
-    // elem?.appendChild(css3drenderer.domElement);
-
-    // ===== ===== ===== ===== =====
 
     const overray_element = document.getElementById(overlay_dom);
 
@@ -412,16 +454,14 @@ export class WebAR {
       this.delegate?.onRender?.(renderer);
       renderer.render(scene, camera);
 
-      if (this.scene2 === undefined) alert("scene2 is undefined");
-      if (this.renderer2 === undefined) {
-        alert("renderer2 is undefined");
-        throw new Error("renderer2 is undefined");
-      }
-      this.renderer2.render(this.scene2, camera);
       this.controls?.update();
-      // ===== ===== ===== ===== ===== css3dobjectについて
-      // css3drenderer.render(this.scene2, camera);
-      // ===== ===== ===== ===== =====
+
+      if (this.rocket?.position === undefined) {
+        alert("rocket.position is undefined");
+        throw new Error("a");
+      }
+      // this.animate3DTextMaterial(this.rocket?.position);
+      this.animate3DTextMaterial();
     };
 
     // フレームごとに実行されるアニメーション
