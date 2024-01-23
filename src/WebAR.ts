@@ -23,6 +23,7 @@ export class WebAR {
   scene = new THREE.Scene();
   rocket?: THREE.Object3D;
   tenbin?: THREE.Object3D;
+  tenbin2?: THREE.Object3D;
   passedTime?: number;
   isLaunch?: boolean;
   tween: any;
@@ -85,17 +86,101 @@ export class WebAR {
   checkCollision() {
     if (this.rocketBoundingBox && this.tenbinBoundingBox) {
       if (this.rocketBoundingBox.intersectsBox(this.tenbinBoundingBox)) {
-        // 衝突した場合の処理
-        alert("Rocket and Tenbin collided!");
-
-        // 画面遷移などの処理を実行
-        // this.delegate?.onCollisionDetected?.(); // 適切なデリゲートを呼び出すなど
-
-        // 画面遷移の例 (Vue Router を使用する場合)
-        // router.push("/main/collisionPage");
+        console.log("ロケットとテンビンが衝突しました！");
+        this.handleCollision();
       }
     }
   }
+  
+  handleCollision() {
+    console.log("ロケットとテンビンが衝突しました！");
+  
+    // 1. ロケットとテンビンを非表示にする
+    if (this.rocket) {
+      this.rocket.visible = false;
+      this.scene.remove(this.rocket);
+    }
+    if (this.tenbin) {
+      this.tenbin.visible = false;
+      this.scene.remove(this.tenbin);
+    }
+  
+    // 2. 新しいテンビンを同じ位置に再表示する
+    this.addNewTenbin();
+  
+    // 3. 新しいテンビンに自由落下アニメーションを適用する
+    if (this.tenbin2) {
+      this.tenbin2.position.y = 5; // 初期位置（適切な位置に設定する必要があります）
+      this.tenbin2.visible = true;
+      this.animateNewTenbin();
+    }
+  }
+  
+  // 新しいテンビンに自由落下アニメーションを適用する
+  animateNewTenbin() {
+    const clock = new THREE.Clock();
+  
+    const update = () => {
+      const delta = clock.getDelta();
+  
+      if (!this.tenbin2) {
+        console.error("tenbin2オブジェクトが定義されていません");
+        return;
+      }
+  
+      const gravity = new THREE.Vector3(0, -0.01, 0);
+      const acceleration = gravity.clone();
+  
+      const tenbinVelocity = this.tenbin2.userData.velocity || new THREE.Vector3();
+      tenbinVelocity.addScaledVector(acceleration, delta);
+      this.tenbin2.userData.velocity = tenbinVelocity;
+  
+      // 速度に応じて位置を直接更新
+      this.tenbin2.position.y += tenbinVelocity.y * delta;
+  
+      if (this.tenbin2.position.y <= 0) {
+        this.tenbin2.position.y = 0;
+
+        // アニメーションの終了処理を追加
+        this.scene.remove(this.tenbin2);
+        this.tenbin2 = undefined; // 重要: tenbin2 を undefined に設定
+
+        // 新しいtenbinを作成してシーンに追加
+      this.addNewTenbinAtGround();
+        
+        return;
+      }
+  
+      requestAnimationFrame(update);
+    };
+  
+    update();
+  }
+  
+  // 新しいtenbinを作成してシーンに追加するメソッド
+  addNewTenbinAtGround() {
+    const loader = new GLTFLoader();
+    loader.load("/tenbin.glb", (gltf) => {
+      this.tenbin = gltf.scene;
+      this.tenbin.scale.set(0.01, 0.01, 0.01);
+      this.tenbin.position.y = 0; // 地面の高さに設定
+      this.scene.add(this.tenbin);
+    }, undefined, (error) => {
+      console.error(error);
+    });
+  }
+  
+  
+
+  
+
+
+
+
+
+  
+  
+  
 
   updateBoundingBoxes() {
     if (this.rocket && this.tenbin) {
@@ -127,6 +212,25 @@ export class WebAR {
     );
   }
 
+  addNewTenbin() {
+    const loader = new GLTFLoader();
+    loader.load("/tenbin.glb", (gltf) => {
+      this.tenbin2 = gltf.scene;
+      this.tenbin2.scale.set(0.05, 0.05, 0.05);
+  
+      // ここで初期位置をコピー
+      this.tenbin2.position.copy(new THREE.Vector3(0, 5, 0));
+  
+      this.scene.add(this.tenbin2);
+    }, undefined, (error) => {
+      console.error(error);
+    });
+  }
+  
+
+  
+
+
   addRocket() {
     const loader = new GLTFLoader();
     loader.load("/rocket.gltf", (gltf) => {
@@ -156,29 +260,15 @@ export class WebAR {
     this.updateBoundingBoxes();
   }
 
-  getParticle(): void {
-    let p;
-    if (particleArray.length > 0) {
-      p = particleArray.pop();
-    } else {
-      p = new Particle();
-    }
-    return p;
-  }
-
-  createSmoke(rocket): void {
-    let p = this.getParticle();
-    dropParticle(p, rocket);
-  }
-
-  createFlyingParticles(): void {
-    let p = this.getParticle();
-    flyParticle(p);
-  }
-
+  
   placeScene(ar_scene: ARScene) {
     const nodes = this.rocket;
-
+  
+    if (!nodes) {
+      // this.rocket が undefined の場合は何もせずに終了
+      return;
+    }
+  
     if (this.baseNode) {
       this.scene.remove(this.baseNode);
     }
@@ -190,9 +280,10 @@ export class WebAR {
     );
     this.baseNode.add(nodes);
     this.scene.add(this.baseNode!);
-
+  
     this.arScene = ar_scene;
   }
+  
 
   changeScene(ar_scene: ARScene) {
     this.baseNode?.clear();
