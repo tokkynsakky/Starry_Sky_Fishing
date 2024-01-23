@@ -28,7 +28,6 @@ export class WebAR {
   scene = new THREE.Scene();
   scene2 = new THREE.Scene();
   rocket?: THREE.Object3D;
-  tenbin?: THREE.Object3D;
   passedTime?: number;
   isLaunch?: boolean;
   tween: any;
@@ -50,8 +49,13 @@ export class WebAR {
   tenbinBoundingBox?: THREE.Box3;
 
   constellationList?: Array<string> = ["tenbin"];
-  constellationMap?: Map<string, THREE.Mesh>;
+  constellationMap?: Map<string, THREE.Object3D>;
   text3DMaterialMap?: Map<string, THREE.Mesh>;
+
+  // 座標について
+  tenbin?: THREE.Object3D;
+  orion?: THREE.Object3D;
+  andro?: THREE.Object3D;
 
   //シングルトンを作る（インスタンスがアプリケーション内で唯一であることを保証する）
   private static instance: WebAR | null = null;
@@ -64,12 +68,18 @@ export class WebAR {
 
   private constructor() {
     this.constellationMap = new Map([["tenbin", new THREE.Mesh()]]);
-    this.text3DMaterialMap = new Map([["tenbin", new THREE.Mesh()]]);
+    // this.text3DMaterialMap = new Map([["tenbin", new THREE.Mesh()]]);
   }
 
   constellationSetter() {
-    this.constellationList = ["tenbin"];
-    for (const constellation of this.constellationList) {
+    this.constellationList = ["tenbin", "orion", "andro"];
+    const x_arr: Array<number> = [0, 2, -1];
+    const z_arr: Array<number> = [0, 2, -1];
+    const y = 5;
+    // for (const constellation of this.constellationList) {
+    for (let i = 0; i < this.constellationList.length; ++i) {
+      // this.addConstellation(constellation, x, y, z);
+      this.addConstellation(this.constellationList[i], x_arr[i], y, z_arr[i]);
     }
   }
 
@@ -78,11 +88,41 @@ export class WebAR {
     loader.load(
       "/" + glbName + ".glb",
       (gltf) => {
-        this.tenbin = gltf.scene;
-        this.tenbin.scale.set(x, y, z);
-        // this.tenbin.scale.set(0.05, 0.05, 0.05);
-        this.tenbin.position.y = 5;
-        this.scene.add(this.tenbin);
+        if (glbName === "tenbin") {
+          // this.constellationMap?.get(glbName);
+          this.tenbin = gltf.scene;
+          // alert(typeof this.tenbin);
+          this.tenbin.scale.set(0.03, 0.03, 0.03);
+          // this.tenbin.scale.set(0.05, 0.05, 0.05);
+          this.tenbin.position.x = x;
+          this.tenbin.position.y = y;
+          this.tenbin.position.z = z;
+          this.scene.add(this.tenbin);
+        }
+
+        if (glbName === "orion") {
+          // this.constellationMap?.get(glbName);
+          this.orion = gltf.scene;
+          // alert(typeof this.tenbin);
+          this.orion.scale.set(0.03, 0.03, 0.03);
+          // this.tenbin.scale.set(0.05, 0.05, 0.05);
+          this.orion.position.x = x;
+          this.orion.position.y = y;
+          this.orion.position.z = z;
+          this.scene.add(this.orion);
+        }
+
+        if (glbName === "andro") {
+          // this.constellationMap?.get(glbName);
+          this.andro = gltf.scene;
+          // alert(typeof this.tenbin);
+          this.andro.scale.set(0.03, 0.03, 0.03);
+          // this.tenbin.scale.set(0.05, 0.05, 0.05);
+          this.andro.position.x = x;
+          this.andro.position.y = y;
+          this.andro.position.z = z;
+          this.scene.add(this.andro);
+        }
       },
       undefined,
       (error) => {
@@ -339,9 +379,10 @@ export class WebAR {
 
     // スタート時に追加したいならここでscene.addをする
     // this.makeDome(); domeは一度不要なのでコメントアウトしておく
-    this.addConstellation("tenbin", 0.05, 0.05, 0.05);
+    // this.addConstellation("tenbin", 0.05, 0.05, 0.05);
+    this.constellationSetter();
     this.addRocket();
-    await this.add3DTextMaterial("てんぷテキスト");
+    // await this.add3DTextMaterial("てんぷテキスト"); // ここで3Dな文字を追加している
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -461,7 +502,7 @@ export class WebAR {
         throw new Error("a");
       }
       // this.animate3DTextMaterial(this.rocket?.position);
-      this.animate3DTextMaterial();
+      // this.animate3DTextMaterial(); //ここで3Dな文字のrender
     };
 
     // フレームごとに実行されるアニメーション
