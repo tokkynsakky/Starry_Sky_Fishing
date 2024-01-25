@@ -1,4 +1,5 @@
 // WebAR.ts
+import html2canvas from "html2canvas";
 import * as THREE from "three";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import type { ARScene } from "./scene";
@@ -329,97 +330,49 @@ export class WebAR {
     // this.textMesh.position.z = pos.z;
   }
 
-  // 使ってないのですが、サンプルとして残しておきたいです。
-  addCss3dObject(camera: THREE.PerspectiveCamera, scene: THREE.Scene) {
-    this.scene2 = new THREE.Scene();
+  async addHtmlTexture(constellationName: string, description: string) {
+    const container = document.createElement("div");
+    container.className = "element-container";
 
-    const element = document.createElement("div");
-    element.style.width = "100px";
-    element.style.height = "100px";
-    element.style.opacity = "0.5";
-    element.style.background = new THREE.Color(
-      Math.random() * 0xffffff
-    ).getStyle();
+    const title = document.createElement("h4");
+    title.className = "element-title";
+    title.textContent = constellationName;
 
-    const textElement = document.createElement("div");
-    textElement.textContent = "hello world";
-    textElement.style.color = "#ccc";
-    element.appendChild(textElement);
+    const desc = document.createElement("p");
+    desc.className = "element-description";
+    desc.textContent = description;
 
-    const object = new CSS3DObject(element);
-    object.position.x = 0;
-    object.position.y = -30;
-    object.position.z = -100;
-    object.rotation.x = 0;
-    object.rotation.y = 0;
-    object.rotation.z = 0;
-    object.scale.x = 0.1;
-    object.scale.y = 0.1;
-    this.scene2.add(object);
+    container.appendChild(title);
+    container.appendChild(desc);
 
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xcccccc,
-      wireframe: true,
-      wireframeLinewidth: 10,
-      side: THREE.DoubleSide,
+    const html2canvasElement = document.getElementById("html2canvas");
+    if (html2canvasElement === null) throw new Error();
+
+    const contentWidth = Math.max(title.scrollWidth, desc.scrollWidth);
+    const contentHeight = title.scrollHeight + desc.scrollHeight;
+    html2canvasElement.style.width = "230px";
+    html2canvasElement.style.opacity = "0.8";
+    html2canvasElement.appendChild(container);
+
+    const canvas = await html2canvas(html2canvasElement, {
+      useCORS: true,
+      scale: 2,
+      backgroundColor: null,
     });
 
-    const geometry = new THREE.PlaneGeometry(100, 100);
+    const texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true;
+
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.DoubleSide,
+      transparent: true,
+    });
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.copy(object.position);
-    mesh.rotation.copy(object.rotation);
-    mesh.scale.copy(object.scale);
-    scene.add(mesh);
-
-    this.renderer2 = new CSS3DRenderer();
-    this.renderer2.setSize(window.innerWidth, window.innerHeight);
-    this.renderer2.domElement.style.position = "absolute";
-    this.renderer2.domElement.style.top = "0";
-    // document.body.appendChild(this.renderer2.domElement);
-    document
-      .getElementById("css3dobject")
-      ?.appendChild(this.renderer2.domElement);
-
-    // this.controls = new TrackballControls(camera, this.renderer2.domElement);
+    mesh.position.set(0, 0, -2);
+    this.scene.add(mesh);
   }
-
-  // addConstellation() {
-  //   // 一応呼ばれていそう
-  //   const loader = new GLTFLoader();
-  //   loader.load(
-  //     "/ph2.glb",
-  //     (gltf) => {
-  //       this.tenbin = gltf.scene;
-  //       this.tenbin.scale.set(0.05, 0.05, 0.05);
-  //       this.tenbin.position.y = 5;
-  //       this.tenbin.rotation.x = Math.PI; // 180度回転
-  //       this.scene.add(this.tenbin);
-  //     },
-  //     undefined,
-  //     (error) => {
-  //       alert(error);
-  //     }
-  //   );
-  // }
-
-  // addNewTenbin() {
-  //   const loader = new GLTFLoader();
-  //   loader.load("/tenbin.glb", (gltf) => {
-  //     this.tenbin2 = gltf.scene;
-  //     this.tenbin2.scale.set(0.05, 0.05, 0.05);
-
-  //     // ここで初期位置をコピー
-  //     this.tenbin2.position.copy(new THREE.Vector3(0, 5, 0));
-
-  //     // const beforTenbinPos = this.tenbin?.position
-  //     // if(beforTenbinPos === undefined) throw new Error('tenbinPos is undefined')
-  //     // this.tenbin2.position.copy(beforTenbinPos);
-
-  //     this.scene.add(this.tenbin2);
-  //   }, undefined, (error) => {
-  //     console.error(error);
-  //   });
-  //}
 
   addRocket() {
     const loader = new GLTFLoader();
@@ -513,6 +466,10 @@ export class WebAR {
     this.constellationSetter();
     this.addRocket();
     // await this.add3DTextMaterial("てんぷテキスト"); // ここで3Dな文字を追加している
+    await this.addHtmlTexture(
+      "Hello World",
+      "星座の説明とか入る予定です。結構長い文章を想定していて、改行とかあっても綺麗に表示されるようにしたいです。長い文章を想定して無駄に文章を追加します〜〜〜〜〜〜〜〜〜〜"
+    );
 
     /* RENDERER */
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });

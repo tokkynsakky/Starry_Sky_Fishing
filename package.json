@@ -17,6 +17,7 @@
     "ar.js": "^2.2.2",
     "cannon": "^0.6.2",
     "eventing-bus": "^2.0.1",
+    "html2canvas": "^1.4.1",
     "js-event-bus": "^1.1.1",
     "three": "^0.158.0",
     "three-csg": "^1.0.0",

@@ -24,9 +24,9 @@ export default defineComponent({
     const webar = useWebAR();
     let scene: TestScene;
 
-    onMounted(() => {
+    onMounted(async () => {
       // webar.start("css3dobject");
-      webar.start(overlay_dom);
+      await webar.start(overlay_dom);
     });
 
     const startar = () => {
